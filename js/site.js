@@ -1,4 +1,4 @@
-/* Foundry site v2 — Ferrum. No dependencies, no trackers. */
+/* Foundry site v3 — Ferrum. No dependencies, no trackers. */
 (() => {
   'use strict';
   const doc = document.documentElement;
@@ -19,7 +19,11 @@
   $$('#navlinks a').forEach(a => a.addEventListener('click', () => {
     nav.classList.remove('is-open'); menu.setAttribute('aria-expanded', 'false');
   }));
-  const links = new Map($$('#navlinks a').map(a => [a.getAttribute('href').slice(1), a]));
+  const links = new Map($$('#navlinks a').map(a => {
+    const href = a.getAttribute('href') || '';
+    const id = href.includes('#') ? href.split('#')[1] : href.replace(/^#/, '');
+    return [id, a];
+  }).filter(([id]) => id));
   const spy = new IntersectionObserver(es => es.forEach(e => {
     if (e.isIntersecting) { links.forEach(l => l.classList.remove('is-active')); links.get(e.target.id)?.classList.add('is-active'); }
   }), { rootMargin: '-45% 0px -50% 0px' });
@@ -45,7 +49,7 @@
   });
 
   /* ---- mission steps + log ---- */
-  const steps = $('#steps'), stepEls = $$('.step', steps);
+  const steps = $('#steps'), stepEls = steps ? $$('.step', steps) : [];
   const logItems = $$('#log > li'), approve = $('#approve');
   const count = $('#logcount'), prog = $('#logprog');
   let shown = 0;
@@ -55,7 +59,8 @@
     logItems.forEach((li, i) => { li.classList.toggle('is-in', i < n); li.classList.toggle('is-now', i === n - 1); });
     if (approve) { approve.classList.toggle('is-ok', n >= 6); const b = $('#approveBtn'); if (b) b.textContent = n >= 6 ? 'Approved ✓' : 'Approve'; }
     const done = Math.min(n, 6);
-    count.textContent = `${done} / 6 steps`; prog.style.width = (done / 6 * 100) + '%';
+    if (count) count.textContent = `${done} / 6 steps`;
+    if (prog) prog.style.width = (done / 6 * 100) + '%';
   };
 
   /* ---- scroll-linked effects ---- */
@@ -67,12 +72,14 @@
     requestAnimationFrame(() => {
       ticking = false;
       const vh = window.innerHeight;
-      // timeline progress
-      const r = steps.getBoundingClientRect();
-      maxP = Math.max(maxP, Math.max(0, Math.min(1, (vh * 0.62 - r.top) / r.height))); const p = maxP;
-      steps.style.setProperty('--p', p.toFixed(3));
-      stepEls.forEach((s, i) => s.classList.toggle('is-on', p >= i / stepEls.length + 0.02 || p > 0.98));
-      showLog(Math.round(p * logItems.length + (p > 0 ? 0.6 : 0)));
+      // timeline progress (index page only)
+      if (steps) {
+        const r = steps.getBoundingClientRect();
+        maxP = Math.max(maxP, Math.max(0, Math.min(1, (vh * 0.62 - r.top) / r.height))); const p = maxP;
+        steps.style.setProperty('--p', p.toFixed(3));
+        stepEls.forEach((s, i) => s.classList.toggle('is-on', p >= i / stepEls.length + 0.02 || p > 0.98));
+        showLog(Math.round(p * logItems.length + (p > 0 ? 0.6 : 0)));
+      }
       // parallax
       if (!reduce.matches) pars.forEach(el => {
         const b = el.getBoundingClientRect(); const c = (b.top + b.height / 2 - vh / 2);
@@ -90,12 +97,115 @@
     if (d.open) $$('.faq details').forEach(o => { if (o !== d) o.open = false; });
   }));
 
-  /* ---- placeholder downloads ---- */
-  $$('#download-windows, #download-android').forEach(a => a.addEventListener('click', ev => {
-    ev.preventDefault();
-    const n = $('.notice'); n.animate?.([{ transform: 'scale(1)' }, { transform: 'scale(1.03)' }, { transform: 'scale(1)' }], { duration: 400 });
-    n.scrollIntoView({ behavior: reduce.matches ? 'auto' : 'smooth', block: 'center' });
-  }));
+  /* ---- early access form ---- */
+  const INTERESTS = new Set(['Games', 'Apps', 'Business', 'Other']);
+  const STORAGE_KEY = 'foundry-early-access';
+  const emailOk = (v) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v);
+  const form = $('#ea-form');
+  const success = $('#ea-success');
+
+  const fieldWrap = (el) => el.closest('.field');
+  const setError = (el, msg) => {
+    const wrap = fieldWrap(el);
+    const err = wrap && wrap.querySelector('.field-error');
+    if (wrap) wrap.classList.toggle('is-invalid', !!msg);
+    if (err) err.textContent = msg || '';
+    el.setAttribute('aria-invalid', msg ? 'true' : 'false');
+  };
+  const clearErrors = () => {
+    if (!form) return;
+    $$('.field-error', form).forEach(e => e.textContent = '');
+    $$('.is-invalid', form).forEach(e => e.classList.remove('is-invalid'));
+    $$('input, select', form).forEach(el => el.setAttribute('aria-invalid', 'false'));
+    const st = $('#ea-status'); if (st) st.textContent = '';
+  };
+  const showSuccess = () => {
+    if (!form || !success) return;
+    form.hidden = true;
+    success.hidden = false;
+    if (reduce.matches) {
+      // animations already disabled by CSS; keep the mark fully drawn
+    }
+    const heading = success.querySelector('h3');
+    if (heading) heading.focus?.();
+    success.focus({ preventScroll: true });
+    success.scrollIntoView({ behavior: reduce.matches ? 'auto' : 'smooth', block: 'center' });
+  };
+  const readLocal = () => {
+    try { return JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]'); }
+    catch { return []; }
+  };
+  const writeLocal = (entry) => {
+    const list = readLocal();
+    const email = entry.email.toLowerCase();
+    if (!list.some(x => (x.email || '').toLowerCase() === email)) list.push(entry);
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(list));
+  };
+  const validate = () => {
+    clearErrors();
+    const name = $('#ea-name').value.trim();
+    const email = $('#ea-email').value.trim();
+    const interest = $('#ea-interest').value;
+    const consent = $('#ea-consent').checked;
+    let ok = true, first = null;
+    if (name.length > 80) { setError($('#ea-name'), 'Please keep your name under 80 characters.'); ok = false; first = first || $('#ea-name'); }
+    if (!email) { setError($('#ea-email'), 'Please enter your email.'); ok = false; first = first || $('#ea-email'); }
+    else if (!emailOk(email) || email.length > 254) { setError($('#ea-email'), 'Please enter a valid email.'); ok = false; first = first || $('#ea-email'); }
+    if (!INTERESTS.has(interest)) { setError($('#ea-interest'), 'Please pick what you’re here for.'); ok = false; first = first || $('#ea-interest'); }
+    if (!consent) { setError($('#ea-consent'), 'Please agree to get early-access updates.'); ok = false; first = first || $('#ea-consent'); }
+    if (first) first.focus();
+    return ok ? { name, email, interest, consent: true } : null;
+  };
+
+  if (form) {
+    ['input', 'change', 'blur'].forEach(evt => form.addEventListener(evt, ev => {
+      if (!ev.target.matches('input, select')) return;
+      const wrap = fieldWrap(ev.target);
+      if (wrap && wrap.classList.contains('is-invalid')) {
+        // live-clear once the field is valid again, after a first attempt
+        const email = ev.target.id === 'ea-email' ? ev.target.value.trim() : '';
+        if (ev.target.id === 'ea-email' && email && emailOk(email)) setError(ev.target, '');
+        if (ev.target.id === 'ea-interest' && INTERESTS.has(ev.target.value)) setError(ev.target, '');
+        if (ev.target.id === 'ea-consent' && ev.target.checked) setError(ev.target, '');
+        if (ev.target.id === 'ea-name' && ev.target.value.trim().length <= 80) setError(ev.target, '');
+      }
+    }));
+
+    form.addEventListener('submit', async (ev) => {
+      ev.preventDefault();
+      const payload = validate();
+      if (!payload) return;
+      const btn = $('#ea-submit');
+      const status = $('#ea-status');
+      const endpoint = ((window.FOUNDRY_CONFIG && window.FOUNDRY_CONFIG.SIGNUP_ENDPOINT) || '').trim();
+      if (btn) btn.disabled = true;
+      if (status) status.textContent = '';
+      try {
+        if (!endpoint) {
+          writeLocal({ ...payload, ts: new Date().toISOString(), source: 'demo' });
+          showSuccess();
+          return;
+        }
+        const res = await fetch(endpoint, {
+          method: 'POST',
+          headers: { 'content-type': 'application/json', 'accept': 'application/json' },
+          body: JSON.stringify(payload)
+        });
+        let data = {};
+        try { data = await res.json(); } catch {}
+        if (res.ok && (data.ok !== false)) {
+          writeLocal({ ...payload, ts: new Date().toISOString(), source: 'api' });
+          showSuccess();
+          return;
+        }
+        if (res.status === 429) throw new Error('Too many tries from this network. Please wait a bit and try again.');
+        throw new Error((data && data.error) || 'Something went wrong. Please try again.');
+      } catch (err) {
+        if (status) status.textContent = err && err.message ? err.message : 'Something went wrong. Please try again.';
+        if (btn) btn.disabled = false;
+      }
+    });
+  }
 
   /* ---- forge canvas: rising embers + sparks ---- */
   const cv = $('#forge');
