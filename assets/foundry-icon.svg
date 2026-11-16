@@ -1,0 +1,51 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024">
+  <!-- Foundry app icon (Ferrum): Ember flame + Echo orb, one face with a shared visor -->
+  <defs>
+    <linearGradient id="tile" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#1D1729"/>
+      <stop offset="1" stop-color="#2E2045"/>
+    </linearGradient>
+    <radialGradient id="warm" cx="0.5" cy="0.62" r="0.55">
+      <stop offset="0" stop-color="#FF922B" stop-opacity="0.22"/>
+      <stop offset="0.55" stop-color="#8F59F9" stop-opacity="0.12"/>
+      <stop offset="1" stop-color="#8F59F9" stop-opacity="0"/>
+    </radialGradient>
+    <linearGradient id="ember" x1="0" y1="1" x2="0" y2="0">
+      <stop offset="0" stop-color="#D9480F"/>
+      <stop offset="0.55" stop-color="#FF922B"/>
+      <stop offset="1" stop-color="#FFD43B"/>
+    </linearGradient>
+    <radialGradient id="core" cx="0.5" cy="0.5" r="0.5">
+      <stop offset="0" stop-color="#FFF4C2" stop-opacity="0.95"/>
+      <stop offset="1" stop-color="#FFD43B" stop-opacity="0"/>
+    </radialGradient>
+    <radialGradient id="orb" cx="0.38" cy="0.3" r="0.8">
+      <stop offset="0" stop-color="#D3BFFF"/>
+      <stop offset="0.55" stop-color="#8F59F9"/>
+      <stop offset="1" stop-color="#4C1D95"/>
+    </radialGradient>
+    <linearGradient id="visorLight" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0" stop-color="#FFE3BF"/>
+      <stop offset="0.5" stop-color="#FFFFFF"/>
+      <stop offset="1" stop-color="#E9DEFF"/>
+    </linearGradient>
+    <filter id="soft" x="-20%" y="-200%" width="140%" height="500%"><feGaussianBlur stdDeviation="12"/></filter>
+    <clipPath id="L"><rect width="512" height="1024"/></clipPath>
+    <clipPath id="R"><rect x="512" width="512" height="1024"/></clipPath>
+  </defs>
+  <rect width="1024" height="1024" rx="228" fill="url(#tile)"/>
+  <rect width="1024" height="1024" rx="228" fill="url(#warm)"/>
+  <g clip-path="url(#L)">
+    <path d="M512 136 C 452 236 330 312 272 432 C 236 506 232 556 236 604 C 248 752 368 860 512 860 Z" fill="url(#ember)"/>
+    <ellipse cx="452" cy="742" rx="120" ry="130" fill="url(#core)" opacity="0.7"/>
+    <ellipse cx="368" cy="470" rx="34" ry="92" transform="rotate(24 368 470)" fill="#FFFFFF" opacity="0.18"/>
+  </g>
+  <g clip-path="url(#R)">
+    <circle cx="512" cy="580" r="280" fill="url(#orb)"/>
+    <ellipse cx="640" cy="420" rx="92" ry="44" transform="rotate(28 640 420)" fill="#FFFFFF" opacity="0.2"/>
+  </g>
+  <rect x="509" y="190" width="6" height="672" fill="#1D1729" opacity="0.45"/>
+  <rect x="318" y="548" width="388" height="96" rx="48" fill="#140F1F" opacity="0.86"/>
+  <rect x="362" y="582" width="300" height="28" rx="14" fill="url(#visorLight)" filter="url(#soft)" opacity="0.8"/>
+  <rect x="362" y="584" width="300" height="24" rx="12" fill="url(#visorLight)"/>
+</svg>
