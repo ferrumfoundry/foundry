@@ -181,6 +181,19 @@
       if (btn) btn.disabled = true;
       if (status) status.textContent = '';
       try {
+        const gf = window.FOUNDRY_CONFIG && window.FOUNDRY_CONFIG.GOOGLE_FORM;
+        if (!endpoint && gf && gf.action) {
+          const body = new URLSearchParams();
+          body.append(gf.fields.name, payload.name || '');
+          body.append(gf.fields.email, payload.email);
+          body.append(gf.fields.interest, payload.interest);
+          body.append(gf.fields.consent, 'Yes');
+          body.append(gf.fields.source, 'website');
+          await fetch(gf.action, { method: 'POST', mode: 'no-cors', body });
+          writeLocal({ ...payload, ts: new Date().toISOString(), source: 'google-form' });
+          showSuccess();
+          return;
+        }
         if (!endpoint) {
           writeLocal({ ...payload, ts: new Date().toISOString(), source: 'demo' });
           showSuccess();
