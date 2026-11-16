@@ -421,3 +421,7 @@ footer{padding:56px 0 48px;border-top:1px solid var(--line);color:var(--dim);fon
 .fcard h3{display:flex;flex-wrap:wrap;align-items:center;gap:6px 0}
 .pill-soon{opacity:.8}
 .ea-local{margin:4px 0 0;color:var(--dim);font-size:13.5px;line-height:1.5;max-width:46ch}
+
+/* Locked download buttons (early access) */
+.btn--locked{cursor:not-allowed;opacity:.55;pointer-events:none;user-select:none;background:rgba(255,255,255,.06);color:inherit;border:1px solid rgba(255,255,255,.14);box-shadow:none;filter:grayscale(.4)}
+.btn--locked svg{width:18px;height:18px}
